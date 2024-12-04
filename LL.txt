@@ -1,0 +1,1698 @@
+1.	Alice and Bob wish to share private message using a shift cipher algorithm to ensure confidentiality. Both can work as a sender and receiver so individual function should be implemented for encryption, decryption and brute force with the following conditions:
+•	Plaintext should be in lowercase. (not accept any number and special symbol)
+•	Ciphertext should be in uppercase. (not accept any number and special symbol)
+•	Brute force attack. (Find the key value)
+
+CODE---------------------------
+import java.util.Scanner;
+
+public class Main {
+
+    // Encrypt function
+    public static String encrypt(String plaintext, int key) {
+        StringBuilder ciphertext = new StringBuilder();
+        for (char ch : plaintext.toCharArray()) {
+            ciphertext.append((char) ('A' + (ch - 'a' + key) % 26));
+        }
+        return ciphertext.toString();
+    }
+
+    // Decrypt function
+    public static String decrypt(String ciphertext, int key) {
+        StringBuilder plaintext = new StringBuilder();
+        for (char ch : ciphertext.toCharArray()) {
+            plaintext.append((char) ('a' + (ch - 'A' - key + 26) % 26));
+        }
+        return plaintext.toString();
+    }
+
+    // Brute force function
+    public static void bruteForce(String ciphertext) {
+        System.out.println("Brute force results:");
+        for (int key = 0; key < 26; key++) {
+            System.out.println("Key " + key + ": " + decrypt(ciphertext, key));
+        }
+    }
+
+    // Main function
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. Encrypt");
+            System.out.println("2. Decrypt");
+            System.out.println("3. Brute Force");
+            System.out.println("4. Exit");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline character
+
+            try {
+                if (choice == 1) {
+                    System.out.println("Enter plaintext (lowercase only): ");
+                    String plaintext = scanner.nextLine();
+                    if (!plaintext.matches("[a-z]+")) throw new IllegalArgumentException("Invalid plaintext.");
+
+                    System.out.println("Enter shift key (integer): ");
+                    int key = scanner.nextInt();
+
+                    System.out.println("Encrypted text: " + encrypt(plaintext, key));
+
+                } else if (choice == 2) {
+                    System.out.println("Enter ciphertext (uppercase only): ");
+                    String ciphertext = scanner.nextLine();
+                    if (!ciphertext.matches("[A-Z]+")) throw new IllegalArgumentException("Invalid ciphertext.");
+
+                    System.out.println("Enter decryption key (integer): ");
+                    int key = scanner.nextInt();
+
+                    System.out.println("Decrypted text: " + decrypt(ciphertext, key));
+
+                } else if (choice == 3) {
+                    System.out.println("Enter ciphertext (uppercase only): ");
+                    String ciphertext = scanner.nextLine();
+                    if (!ciphertext.matches("[A-Z]+")) throw new IllegalArgumentException("Invalid ciphertext.");
+
+                    bruteForce(ciphertext);
+
+                } else if (choice == 4) {
+                    System.out.println("Exiting the program. Goodbye!");
+                    break;
+
+                } else {
+                    System.out.println("Invalid choice. Please select 1, 2, 3, or 4.");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+                scanner.nextLine(); // Clear invalid input
+            }
+        }
+
+        scanner.close();
+    }
+}
+CODE--------------------------------------
+
+
+
+2.	Alice and Bob wish to share private message using a multiplicative cipher algorithm to ensure confidentiality. The key value taken by both parties should be coprime with modulo 26. Both can work as a sender and receiver so individual function should be implemented for encryption, decryption and brute force with the following conditions must be satisfy:
+•	Plaintext should be in lowercase. (Not accept any number and special symbol)
+•	Ciphertext should be uppercase. (Not accept any number and special symbol)
+•	Brute force attack. (Find the key value)
+
+CODE--------------------------------------------
+import java.util.Scanner;
+
+public class Main {
+
+    // Function to calculate modular inverse
+    public static int modInverse(int key, int modulo) {
+        for (int i = 1; i < modulo; i++) {
+            if ((key * i) % modulo == 1) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("Key does not have a modular inverse with modulo " + modulo);
+    }
+
+    // Function to check if two numbers are coprime
+    public static boolean isCoprime(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a == 1;
+    }
+
+    // Encrypt function
+    public static String encrypt(String plaintext, int key) {
+        if (!plaintext.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Plaintext must only contain lowercase letters.");
+        }
+        if (!isCoprime(key, 26)) {
+            throw new IllegalArgumentException("Key must be coprime with 26.");
+        }
+
+        StringBuilder ciphertext = new StringBuilder();
+        for (char ch : plaintext.toCharArray()) {
+            int shifted = (ch - 'a') * key % 26;
+            ciphertext.append((char) ('A' + shifted));
+        }
+        return ciphertext.toString();
+    }
+
+    // Decrypt function
+    public static String decrypt(String ciphertext, int key) {
+        if (!ciphertext.matches("[A-Z]+")) {
+            throw new IllegalArgumentException("Ciphertext must only contain uppercase letters.");
+        }
+        if (!isCoprime(key, 26)) {
+            throw new IllegalArgumentException("Key must be coprime with 26.");
+        }
+
+        int inverseKey = modInverse(key, 26);
+        StringBuilder plaintext = new StringBuilder();
+        for (char ch : ciphertext.toCharArray()) {
+            int shifted = (ch - 'A') * inverseKey % 26;
+            if (shifted < 0) shifted += 26; // Handle negative values
+            plaintext.append((char) ('a' + shifted));
+        }
+        return plaintext.toString();
+    }
+
+    // Brute force function
+    public static void bruteForce(String ciphertext) {
+        if (!ciphertext.matches("[A-Z]+")) {
+            throw new IllegalArgumentException("Ciphertext must only contain uppercase letters.");
+        }
+
+        System.out.println("Brute force results:");
+        for (int key = 1; key < 26; key++) {
+            if (isCoprime(key, 26)) {
+                try {
+                    String plaintext = decrypt(ciphertext, key);
+                    System.out.println("Key " + key + ": " + plaintext);
+                } catch (Exception e) {
+                    // Ignore invalid keys during brute force
+                }
+            }
+        }
+    }
+
+    // Main function
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. Encrypt");
+            System.out.println("2. Decrypt");
+            System.out.println("3. Brute Force");
+            System.out.println("4. Exit");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline character
+
+            try {
+                if (choice == 1) { // Encrypt
+                    System.out.println("Enter plaintext (lowercase only): ");
+                    String plaintext = scanner.nextLine();
+                    System.out.println("Enter key (coprime with 26): ");
+                    int key = scanner.nextInt();
+
+                    System.out.println("Encrypted text: " + encrypt(plaintext, key));
+
+                } else if (choice == 2) { // Decrypt
+                    System.out.println("Enter ciphertext (uppercase only): ");
+                    String ciphertext = scanner.nextLine();
+                    System.out.println("Enter key (coprime with 26): ");
+                    int key = scanner.nextInt();
+
+                    System.out.println("Decrypted text: " + decrypt(ciphertext, key));
+
+                } else if (choice == 3) { // Brute force
+                    System.out.println("Enter ciphertext (uppercase only): ");
+                    String ciphertext = scanner.nextLine();
+
+                    bruteForce(ciphertext);
+
+                } else if (choice == 4) { // Exit
+                    System.out.println("Exiting the program. Goodbye!");
+                    break;
+
+                } else {
+                    System.out.println("Invalid choice. Please select 1, 2, 3, or 4.");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+                scanner.nextLine(); // Clear invalid input
+            }
+        }
+
+        scanner.close();
+    }
+}
+CODE----------------------------------------
+
+
+3.	To enhance the security Amit and Anil are agreed to use the affine cipher algorithm with two keys. So that the first key must be coprime with modulo 26 and second key varies from 1 to 26. Both can work as a sender and receiver so individual function should be implemented for encryption, decryption and brute force with the following conditions must be satisfy:
+•	Plaintext should be in lowercase. (Not accept any number and special symbol)
+•	Ciphertext should be uppercase. (Not accept any number and special symbol)
+•	Brute force attack. (Find the key value)
+
+CODE-------------------------------------
+import java.util.Scanner;
+
+public class Main {
+
+    // Function to calculate modular inverse
+    public static int modInverse(int a, int modulo) {
+        for (int i = 1; i < modulo; i++) {
+            if ((a * i) % modulo == 1) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("First key does not have a modular inverse with modulo " + modulo);
+    }
+
+    // Function to check if two numbers are coprime
+    public static boolean isCoprime(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a == 1;
+    }
+
+    // Encrypt function
+    public static String encrypt(String plaintext, int key1, int key2) {
+        if (!plaintext.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Plaintext must only contain lowercase letters.");
+        }
+        if (!isCoprime(key1, 26)) {
+            throw new IllegalArgumentException("First key must be coprime with 26.");
+        }
+
+        StringBuilder ciphertext = new StringBuilder();
+        for (char ch : plaintext.toCharArray()) {
+            int shifted = (key1 * (ch - 'a') + key2) % 26;
+            ciphertext.append((char) ('A' + shifted));
+        }
+        return ciphertext.toString();
+    }
+
+    // Decrypt function
+    public static String decrypt(String ciphertext, int key1, int key2) {
+        if (!ciphertext.matches("[A-Z]+")) {
+            throw new IllegalArgumentException("Ciphertext must only contain uppercase letters.");
+        }
+        if (!isCoprime(key1, 26)) {
+            throw new IllegalArgumentException("First key must be coprime with 26.");
+        }
+
+        int inverseKey1 = modInverse(key1, 26);
+        StringBuilder plaintext = new StringBuilder();
+        for (char ch : ciphertext.toCharArray()) {
+            int shifted = ((ch - 'A' - key2) * inverseKey1) % 26;
+            if (shifted < 0) shifted += 26; // Handle negative values
+            plaintext.append((char) ('a' + shifted));
+        }
+        return plaintext.toString();
+    }
+
+    // Brute force function
+    public static void bruteForce(String ciphertext) {
+        if (!ciphertext.matches("[A-Z]+")) {
+            throw new IllegalArgumentException("Ciphertext must only contain uppercase letters.");
+        }
+
+        System.out.println("Brute force results:");
+        for (int key1 = 1; key1 < 26; key1++) {
+            if (isCoprime(key1, 26)) {
+                for (int key2 = 0; key2 < 26; key2++) {
+                    try {
+                        String plaintext = decrypt(ciphertext, key1, key2);
+                        System.out.println("Key1 " + key1 + ", Key2 " + key2 + ": " + plaintext);
+                    } catch (Exception e) {
+                        // Ignore invalid keys during brute force
+                    }
+                }
+            }
+        }
+    }
+
+    // Main function
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. Encrypt");
+            System.out.println("2. Decrypt");
+            System.out.println("3. Brute Force");
+            System.out.println("4. Exit");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline character
+
+            try {
+                if (choice == 1) { // Encrypt
+                    System.out.println("Enter plaintext (lowercase only): ");
+                    String plaintext = scanner.nextLine();
+
+                    System.out.println("Enter first key (coprime with 26): ");
+                    int key1 = scanner.nextInt();
+
+                    System.out.println("Enter second key (0 to 25): ");
+                    int key2 = scanner.nextInt();
+
+                    if (key2 < 0 || key2 > 25) {
+                        throw new IllegalArgumentException("Second key must be in the range 0 to 25.");
+                    }
+
+                    System.out.println("Encrypted text: " + encrypt(plaintext, key1, key2));
+
+                } else if (choice == 2) { // Decrypt
+                    System.out.println("Enter ciphertext (uppercase only): ");
+                    String ciphertext = scanner.nextLine();
+
+                    System.out.println("Enter first key (coprime with 26): ");
+                    int key1 = scanner.nextInt();
+
+                    System.out.println("Enter second key (0 to 25): ");
+                    int key2 = scanner.nextInt();
+
+                    if (key2 < 0 || key2 > 25) {
+                        throw new IllegalArgumentException("Second key must be in the range 0 to 25.");
+                    }
+
+                    System.out.println("Decrypted text: " + decrypt(ciphertext, key1, key2));
+
+                } else if (choice == 3) { // Brute force
+                    System.out.println("Enter ciphertext (uppercase only): ");
+                    String ciphertext = scanner.nextLine();
+
+                    bruteForce(ciphertext);
+
+                } else if (choice == 4) { // Exit
+                    System.out.println("Exiting the program. Goodbye!");
+                    break;
+
+                } else {
+                    System.out.println("Invalid choice. Please select 1, 2, 3, or 4.");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+                scanner.nextLine(); // Clear invalid input
+            }
+        }
+
+        scanner.close();
+    }
+}
+CODE---------------------------------------------
+
+4.	Rustom wants to send a confidential message “meet me after toga party” to kelvin. So both are ready to share the initial key and other keys are generated automatically then individual function should be implemented for encryption, decryption and brute force with the following conditions must be satisfy: 
+•	Plaintext should be in lowercase. (Not accept any number and special symbol)
+•	Ciphertext should be uppercase. (Not accept any number and special symbol)
+•	Brute force attack. (Find the key value)
+
+CODE----------------------------------------------import java.util.Scanner;
+
+public class Main {
+
+    // Encrypt function
+    public static String encrypt(String plaintext, String key) {
+        if (!plaintext.matches("[a-z ]+")) {
+            throw new IllegalArgumentException("Plaintext must only contain lowercase letters and spaces.");
+        }
+        if (!key.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Key must only contain lowercase letters.");
+        }
+
+        plaintext = plaintext.replaceAll(" ", ""); // Remove spaces
+        StringBuilder ciphertext = new StringBuilder();
+        key = generateFullKey(plaintext, key);
+
+        for (int i = 0; i < plaintext.length(); i++) {
+            char p = plaintext.charAt(i);
+            char k = key.charAt(i);
+            char c = (char) ((p - 'a' + k - 'a') % 26 + 'A'); // Encrypt using Vigenère formula
+            ciphertext.append(c);
+        }
+
+        return ciphertext.toString();
+    }
+
+    // Decrypt function
+    public static String decrypt(String ciphertext, String key) {
+        if (!ciphertext.matches("[A-Z]+")) {
+            throw new IllegalArgumentException("Ciphertext must only contain uppercase letters.");
+        }
+        if (!key.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Key must only contain lowercase letters.");
+        }
+
+        StringBuilder plaintext = new StringBuilder();
+        key = generateFullKey(ciphertext.toLowerCase(), key);
+
+        for (int i = 0; i < ciphertext.length(); i++) {
+            char c = ciphertext.charAt(i);
+            char k = key.charAt(i);
+            char p = (char) ((c - 'A' - (k - 'a') + 26) % 26 + 'a'); // Decrypt using Vigenère formula
+            plaintext.append(p);
+        }
+
+        return plaintext.toString();
+    }
+
+    // Generate full key matching the length of plaintext
+    private static String generateFullKey(String text, String key) {
+        StringBuilder fullKey = new StringBuilder();
+
+        for (int i = 0; i < text.length(); i++) {
+            fullKey.append(key.charAt(i % key.length())); // Repeat key
+        }
+
+        return fullKey.toString();
+    }
+
+    // Brute force attack to find key
+    public static void bruteForce(String ciphertext, String knownPlaintext) {
+        if (!ciphertext.matches("[A-Z]+")) {
+            throw new IllegalArgumentException("Ciphertext must only contain uppercase letters.");
+        }
+        if (!knownPlaintext.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Known plaintext must only contain lowercase letters.");
+        }
+
+        System.out.println("Brute force results:");
+        for (int keyLength = 1; keyLength <= ciphertext.length(); keyLength++) {
+            System.out.println("Trying key length: " + keyLength);
+            for (int start = 0; start < keyLength; start++) {
+                StringBuilder possibleKey = new StringBuilder();
+
+                for (int i = start; i < ciphertext.length(); i += keyLength) {
+                    char c = ciphertext.charAt(i);
+                    char p = knownPlaintext.charAt(i);
+                    char k = (char) ((c - 'A' - (p - 'a') + 26) % 26 + 'a');
+                    possibleKey.append(k);
+                }
+
+                System.out.println("Possible key: " + possibleKey);
+            }
+        }
+    }
+
+    // Main function
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. Encrypt");
+            System.out.println("2. Decrypt");
+            System.out.println("3. Brute Force");
+            System.out.println("4. Exit");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline character
+
+            if (choice == 1) { // Encrypt
+                System.out.println("Enter plaintext (lowercase letters and spaces only): ");
+                String plaintext = scanner.nextLine();
+
+                System.out.println("Enter key (lowercase letters only): ");
+                String key = scanner.nextLine();
+
+                try {
+                    String ciphertext = encrypt(plaintext, key);
+                    System.out.println("Encrypted text: " + ciphertext);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+
+            } else if (choice == 2) { // Decrypt
+                System.out.println("Enter ciphertext (uppercase letters only): ");
+                String ciphertext = scanner.nextLine();
+
+                System.out.println("Enter key (lowercase letters only): ");
+                String key = scanner.nextLine();
+
+                try {
+                    String plaintext = decrypt(ciphertext, key);
+                    System.out.println("Decrypted text: " + plaintext);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+
+            } else if (choice == 3) { // Brute Force
+                System.out.println("Enter ciphertext (uppercase letters only): ");
+                String ciphertext = scanner.nextLine();
+
+                System.out.println("Enter known plaintext (lowercase letters only): ");
+                String knownPlaintext = scanner.nextLine();
+
+                try {
+                    bruteForce(ciphertext, knownPlaintext);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+
+            } else if (choice == 4) { // Exit
+                System.out.println("Exiting the program. Goodbye!");
+                break;
+
+            } else {
+                System.out.println("Invalid choice. Please select 1, 2, 3, or 4.");
+            }
+        }
+
+        scanner.close();
+    }
+}
+CODE-------------------------------------------------
+
+5.	The project investigates a cipher that is somewhat more complicated than the simple substitution cipher. In the Playfair cipher, there is not a single translation of each letter of the alphabet; that is, you don’t just decide that every B will be turned into an F. Instead, pairs of letters are translated into other pairs of letters. Here is how it works. To start, pick a keyword that does not contain any letter more than once. For example, I’ll pick the word keyword. Now write the letters of that word in the first squares of a five by five matrix. Then finish filling up the remaining squares of the matrix with the remaining letters of the alphabet, in alphabetical order. Since there are 26 letters and only 25 squares, we assign I and J to the same square. So implement Playfair Cipher to encrypt & decrypt the given message where the key matrix can be formed by using a given keyword.
+
+CODE-----------------------------------------------
+import java.util.*;
+
+public class Main {
+
+    private static char[][] keyMatrix = new char[5][5];
+
+    // Generate the key matrix
+    private static void generateKeyMatrix(String keyword) {
+        boolean[] used = new boolean[26];
+        used['j' - 'a'] = true; // Treat 'j' as 'i'
+        keyword = keyword.toLowerCase().replaceAll("j", "i");
+
+        int row = 0, col = 0;
+
+        for (char ch : keyword.toCharArray()) {
+            if (!used[ch - 'a']) {
+                keyMatrix[row][col++] = ch;
+                used[ch - 'a'] = true;
+                if (col == 5) {
+                    col = 0;
+                    row++;
+                }
+            }
+        }
+
+        for (char ch = 'a'; ch <= 'z'; ch++) {
+            if (!used[ch - 'a']) {
+                keyMatrix[row][col++] = ch;
+                used[ch - 'a'] = true;
+                if (col == 5) {
+                    col = 0;
+                    row++;
+                }
+            }
+        }
+    }
+
+    // Find the position of a character in the key matrix
+    private static int[] findPosition(char ch) {
+        if (ch == 'j') ch = 'i'; // Treat 'j' as 'i'
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 5; col++) {
+                if (keyMatrix[row][col] == ch) {
+                    return new int[]{row, col};
+                }
+            }
+        }
+        return null;
+    }
+
+    // Encrypt plaintext
+    private static String encrypt(String plaintext, String keyword) {
+        if (!plaintext.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Plaintext must only contain lowercase letters.");
+        }
+        if (!keyword.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Keyword must only contain lowercase letters.");
+        }
+
+        plaintext = plaintext.replaceAll("j", "i");
+        StringBuilder cleanedText = new StringBuilder();
+
+        // Add 'x' between repeated letters and at the end if odd length
+        for (int i = 0; i < plaintext.length(); i++) {
+            cleanedText.append(plaintext.charAt(i));
+            if (i < plaintext.length() - 1 && plaintext.charAt(i) == plaintext.charAt(i + 1)) {
+                cleanedText.append('x');
+            }
+        }
+        if (cleanedText.length() % 2 != 0) {
+            cleanedText.append('x');
+        }
+
+        generateKeyMatrix(keyword);
+        StringBuilder ciphertext = new StringBuilder();
+
+        for (int i = 0; i < cleanedText.length(); i += 2) {
+            char first = cleanedText.charAt(i);
+            char second = cleanedText.charAt(i + 1);
+
+            int[] pos1 = findPosition(first);
+            int[] pos2 = findPosition(second);
+
+            if (pos1[0] == pos2[0]) { // Same row
+                ciphertext.append(keyMatrix[pos1[0]][(pos1[1] + 1) % 5]);
+                ciphertext.append(keyMatrix[pos2[0]][(pos2[1] + 1) % 5]);
+            } else if (pos1[1] == pos2[1]) { // Same column
+                ciphertext.append(keyMatrix[(pos1[0] + 1) % 5][pos1[1]]);
+                ciphertext.append(keyMatrix[(pos2[0] + 1) % 5][pos2[1]]);
+            } else { // Rectangle
+                ciphertext.append(keyMatrix[pos1[0]][pos2[1]]);
+                ciphertext.append(keyMatrix[pos2[0]][pos1[1]]);
+            }
+        }
+
+        return ciphertext.toString().toUpperCase();
+    }
+
+    // Decrypt ciphertext
+    private static String decrypt(String ciphertext, String keyword) {
+        if (!ciphertext.matches("[A-Z]+")) {
+            throw new IllegalArgumentException("Ciphertext must only contain uppercase letters.");
+        }
+        if (!keyword.matches("[a-z]+")) {
+            throw new IllegalArgumentException("Keyword must only contain lowercase letters.");
+        }
+
+        ciphertext = ciphertext.toLowerCase();
+        generateKeyMatrix(keyword);
+        StringBuilder plaintext = new StringBuilder();
+
+        for (int i = 0; i < ciphertext.length(); i += 2) {
+            char first = ciphertext.charAt(i);
+            char second = ciphertext.charAt(i + 1);
+
+            int[] pos1 = findPosition(first);
+            int[] pos2 = findPosition(second);
+
+            if (pos1[0] == pos2[0]) { // Same row
+                plaintext.append(keyMatrix[pos1[0]][(pos1[1] + 4) % 5]);
+                plaintext.append(keyMatrix[pos2[0]][(pos2[1] + 4) % 5]);
+            } else if (pos1[1] == pos2[1]) { // Same column
+                plaintext.append(keyMatrix[(pos1[0] + 4) % 5][pos1[1]]);
+                plaintext.append(keyMatrix[(pos2[0] + 4) % 5][pos2[1]]);
+            } else { // Rectangle
+                plaintext.append(keyMatrix[pos1[0]][pos2[1]]);
+                plaintext.append(keyMatrix[pos2[0]][pos1[1]]);
+            }
+        }
+
+        return plaintext.toString().replaceAll("x$", ""); // Remove filler
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. Encrypt");
+            System.out.println("2. Decrypt");
+            System.out.println("3. Exit");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            if (choice == 1) { // Encryption
+                System.out.println("Enter plaintext (lowercase only): ");
+                String plaintext = scanner.nextLine();
+
+                System.out.println("Enter keyword (lowercase only): ");
+                String keyword = scanner.nextLine();
+
+                try {
+                    String ciphertext = encrypt(plaintext, keyword);
+                    System.out.println("Encrypted text: " + ciphertext);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+
+            } else if (choice == 2) { // Decryption
+                System.out.println("Enter ciphertext (uppercase only): ");
+                String ciphertext = scanner.nextLine();
+
+                System.out.println("Enter keyword (lowercase only): ");
+                String keyword = scanner.nextLine();
+
+                try {
+                    String plaintext = decrypt(ciphertext, keyword);
+                    System.out.println("Decrypted text: " + plaintext);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+
+            } else if (choice == 3) { // Exit
+                System.out.println("Exiting...");
+                break;
+
+            } else {
+                System.out.println("Invalid choice. Try again.");
+            }
+        }
+
+        scanner.close();
+    }
+}
+CODE--------------------------------------------
+
+
+6.	Write a program to implement Hill Cipher to encrypt & decrypt the given message by using a given key matrix. Show the values for key and its corresponding key inverse values.
+
+CODE--------------------------------------------
+import java.util.Scanner;
+
+public class HillCipher {
+
+    // Function to perform modular arithmetic
+    private static int mod26(int x) {
+        return (x % 26 + 26) % 26;
+    }
+
+    // Function to find the determinant of a 2x2 matrix
+    private static int findDeterminant(int[][] matrix) {
+        return mod26(matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]);
+    }
+
+    // Function to find modular multiplicative inverse of a number under modulo 26
+    private static int modInverse(int a) {
+        for (int i = 1; i < 26; i++) {
+            if ((a * i) % 26 == 1) {
+                return i;
+            }
+        }
+        return -1; // No modular inverse exists
+    }
+
+    // Function to find the inverse of a 2x2 matrix
+    private static int[][] findInverseMatrix(int[][] matrix) {
+        int determinant = findDeterminant(matrix);
+        int determinantInverse = modInverse(determinant);
+
+        if (determinantInverse == -1) {
+            throw new IllegalArgumentException("Matrix is not invertible.");
+        }
+
+        // Calculate adjugate matrix and multiply by determinant's modular inverse
+        int[][] inverse = new int[2][2];
+        inverse[0][0] = mod26(determinantInverse * matrix[1][1]);
+        inverse[0][1] = mod26(determinantInverse * -matrix[0][1]);
+        inverse[1][0] = mod26(determinantInverse * -matrix[1][0]);
+        inverse[1][1] = mod26(determinantInverse * matrix[0][0]);
+
+        return inverse;
+    }
+
+    // Function to encrypt a plaintext using the Hill Cipher
+    private static String encrypt(String plaintext, int[][] keyMatrix) {
+        plaintext = plaintext.toLowerCase().replaceAll("[^a-z]", "");
+        if (plaintext.length() % 2 != 0) {
+            plaintext += "x"; // Add padding if necessary
+        }
+
+        StringBuilder ciphertext = new StringBuilder();
+
+        for (int i = 0; i < plaintext.length(); i += 2) {
+            int[] vector = {plaintext.charAt(i) - 'a', plaintext.charAt(i + 1) - 'a'};
+            int[] encryptedVector = new int[2];
+
+            for (int row = 0; row < 2; row++) {
+                encryptedVector[row] = mod26(keyMatrix[row][0] * vector[0] + keyMatrix[row][1] * vector[1]);
+            }
+
+            ciphertext.append((char) (encryptedVector[0] + 'A'));
+            ciphertext.append((char) (encryptedVector[1] + 'A'));
+        }
+
+        return ciphertext.toString();
+    }
+
+    // Function to decrypt a ciphertext using the Hill Cipher
+    private static String decrypt(String ciphertext, int[][] inverseKeyMatrix) {
+        StringBuilder plaintext = new StringBuilder();
+
+        for (int i = 0; i < ciphertext.length(); i += 2) {
+            int[] vector = {ciphertext.charAt(i) - 'A', ciphertext.charAt(i + 1) - 'A'};
+            int[] decryptedVector = new int[2];
+
+            for (int row = 0; row < 2; row++) {
+                decryptedVector[row] = mod26(inverseKeyMatrix[row][0] * vector[0] + inverseKeyMatrix[row][1] * vector[1]);
+            }
+
+            plaintext.append((char) (decryptedVector[0] + 'a'));
+            plaintext.append((char) (decryptedVector[1] + 'a'));
+        }
+
+        return plaintext.toString();
+    }
+
+    // Utility function to display a matrix
+    private static void displayMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int value : row) {
+                System.out.print(value + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Enter a 2x2 key matrix (row-wise): ");
+        int[][] keyMatrix = new int[2][2];
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                keyMatrix[i][j] = scanner.nextInt();
+            }
+        }
+
+        System.out.println("Key Matrix:");
+        displayMatrix(keyMatrix);
+
+        int[][] inverseKeyMatrix = null;
+        try {
+            inverseKeyMatrix = findInverseMatrix(keyMatrix);
+            System.out.println("Inverse Key Matrix:");
+            displayMatrix(inverseKeyMatrix);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
+
+        scanner.nextLine(); // Consume the newline
+
+        System.out.print("Enter plaintext (lowercase letters only): ");
+        String plaintext = scanner.nextLine();
+
+        String ciphertext = encrypt(plaintext, keyMatrix);
+        System.out.println("Ciphertext: " + ciphertext);
+
+        String decryptedText = decrypt(ciphertext, inverseKeyMatrix);
+        System.out.println("Decrypted Text: " + decryptedText);
+
+        scanner.close();
+    }
+}
+
+CODE------------------------------------------
+
+7.	ElGamal cryptosystem can be defined as the cryptography algorithm that uses the public and private key concepts to secure communication between two systems. It can be considered the asymmetric algorithm where the encryption and decryption happen by using public and private keys. In order to encrypt the message, the public key is used by the client, while the message could be decrypted using the private key on the server end. This is considered an efficient algorithm to perform encryption and decryption as the keys are extremely tough to predict. The sole purpose of introducing the message transaction’s signature is to protect it against MITM, which this algorithm could very effectively achieve. Write a program to implement Elgamal Cryptosystem to generate the pair of keys and then show the encryption & decryption of a given message.
+
+CODE-------------------------------------------
+import java.math.BigInteger;
+import java.security.SecureRandom;
+
+public class ElGamal {
+    private BigInteger p; // Large prime
+    private BigInteger g; // Primitive root modulo p
+    private BigInteger privateKey; // Private key
+    private BigInteger publicKey; // Public key
+
+    public ElGamal(int bitLength) {
+        SecureRandom random = new SecureRandom();
+        
+        // Generate a large prime number p
+        p = BigInteger.probablePrime(bitLength, random);
+        
+        // Generate a primitive root modulo p
+        g = BigInteger.valueOf(2); // Simplified choice for g
+        
+        // Generate private key (1 < privateKey < p-1)
+        privateKey = new BigInteger(bitLength - 1, random).mod(p.subtract(BigInteger.ONE)).add(BigInteger.ONE);
+        
+        // Generate public key: publicKey = g^privateKey mod p
+        publicKey = g.modPow(privateKey, p);
+    }
+
+    public BigInteger[] encrypt(BigInteger message) {
+        SecureRandom random = new SecureRandom();
+        
+        // Generate random k (1 < k < p-1)
+        BigInteger k = new BigInteger(p.bitLength() - 1, random).mod(p.subtract(BigInteger.ONE)).add(BigInteger.ONE);
+        
+        // Calculate c1 = g^k mod p
+        BigInteger c1 = g.modPow(k, p);
+        
+        // Calculate c2 = message * (publicKey^k mod p) mod p
+        BigInteger c2 = message.multiply(publicKey.modPow(k, p)).mod(p);
+        
+        return new BigInteger[]{c1, c2};
+    }
+
+    public BigInteger decrypt(BigInteger[] cipher) {
+        BigInteger c1 = cipher[0];
+        BigInteger c2 = cipher[1];
+        
+        // Calculate shared secret: s = c1^privateKey mod p
+        BigInteger s = c1.modPow(privateKey, p);
+        
+        // Calculate message: message = (c2 * s^-1) mod p
+        BigInteger sInverse = s.modInverse(p);
+        return c2.multiply(sInverse).mod(p);
+    }
+
+    public BigInteger getPublicKey() {
+        return publicKey;
+    }
+
+    public BigInteger getP() {
+        return p;
+    }
+
+    public BigInteger getG() {
+        return g;
+    }
+
+    public static void main(String[] args) {
+        // Initialize the ElGamal system with a bit length for prime number
+        int bitLength = 512;
+        ElGamal elGamal = new ElGamal(bitLength);
+
+        // Display public parameters
+        System.out.println("Public parameters:");
+        System.out.println("Prime (p): " + elGamal.getP());
+        System.out.println("Generator (g): " + elGamal.getG());
+        System.out.println("Public Key: " + elGamal.getPublicKey());
+        
+        // Message to encrypt (as a number)
+        BigInteger message = new BigInteger("123456789");
+        System.out.println("\nOriginal Message: " + message);
+
+        // Encrypt the message
+        BigInteger[] cipher = elGamal.encrypt(message);
+        System.out.println("\nEncrypted Message:");
+        System.out.println("c1: " + cipher[0]);
+        System.out.println("c2: " + cipher[1]);
+
+        // Decrypt the message
+        BigInteger decryptedMessage = elGamal.decrypt(cipher);
+        System.out.println("\nDecrypted Message: " + decryptedMessage);
+    }
+}
+
+CODE-------------------------------------------
+
+8.	Write a program to implement Rabin Miller Primality Test to check whether given number is prime or composite.
+
+CODE-------------------------------------------
+import java.math.BigInteger;
+import java.util.Random;
+
+public class Main {
+
+    public static boolean isPrime(BigInteger n, int k) {
+        if (n.compareTo(BigInteger.ONE) <= 0) {
+            return false;
+        }
+        if (n.equals(BigInteger.TWO) || n.equals(BigInteger.valueOf(3))) {
+            return true;
+        }
+        if (n.mod(BigInteger.TWO).equals(BigInteger.ZERO)) {
+            return false;
+        }
+
+        // Write n-1 as d * 2^r
+        BigInteger d = n.subtract(BigInteger.ONE);
+        int r = 0;
+
+        while (d.mod(BigInteger.TWO).equals(BigInteger.ZERO)) {
+            d = d.divide(BigInteger.TWO);
+            r++;
+        }
+
+        Random random = new Random();
+
+        // Perform k rounds of testing
+        for (int i = 0; i < k; i++) {
+            BigInteger a = new BigInteger(n.bitLength() - 1, random).add(BigInteger.TWO);
+            BigInteger x = a.modPow(d, n);
+
+            if (x.equals(BigInteger.ONE) || x.equals(n.subtract(BigInteger.ONE))) {
+                continue;
+            }
+
+            boolean composite = true;
+            for (int j = 0; j < r - 1; j++) {
+                x = x.modPow(BigInteger.TWO, n);
+                if (x.equals(n.subtract(BigInteger.ONE))) {
+                    composite = false;
+                    break;
+                }
+            }
+
+            if (composite) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void main(String[] args) {
+        java.util.Scanner scanner = new java.util.Scanner(System.in);
+
+        System.out.print("Enter a number to check if it is prime: ");
+        BigInteger num = scanner.nextBigInteger();
+
+        int k = 5;  // Number of iterations to increase accuracy
+        if (isPrime(num, k)) {
+            System.out.println(num + " is a prime number.");
+        } else {
+            System.out.println(num + " is a composite number.");
+        }
+
+        scanner.close();
+    }
+}
+
+CODE----------------------------------------
+
+9.	User A and B want to communicate with each other by shared key so both parties decided that using Asymmetric key cryptography to generate a shared key and exchange with the help of Diffie-Hellman key exchange Algorithm. Perform exchange encryption & decryption using key exchange algorithm.
+
+CODE---------------------------------------
+import java.util.ArrayList; 
+import java.util.List; 
+ 
+public class DeffieHellman { 
+    private int q; 
+    private List<Integer> primitiveRoots; 
+    private int alpha; 
+    private int Ya; 
+     
+    public DeffieHellman() { 
+        this.primitiveRoots = new ArrayList<>(); 
+    } 
+     
+    public void setGlobalPublicElement(int q) { 
+        this.q = q; 
+    } 
+     
+    public void setAlpha(int alpha) { 
+        this.alpha = alpha; 
+    } 
+     
+    public int generateYA(int Xa) { 
+        int Ya = alpha; 
+        for(int i=2; i<=Xa; ++i) { 
+            Ya = (Ya * alpha) % q; 
+        } 
+ 
+        System.out.println("pubic Ya for " + Xa + " = " + 
+Ya); 
+        return Ya; 
+    } 
+     
+    public int generateShareKey(int Yb, int Xa) { 
+        int k = Yb; 
+        for(int i=2; i<= Xa; ++i) { 
+            k = (k*Yb) % q; 
+        } 
+ 
+        System.out.println("Share key for Xx = " + Xa + 
+", Yy = " + Yb + " is: " + k); 
+        return k; 
+    } 
+     
+    public void generatePrimitiveRoots() { 
+        int[] roots = new int[q]; 
+         
+        for(int a=2; a<q; ++a) { 
+            roots[a] = a; 
+            for(int i=2; i<q; ++i) { 
+                roots[a] = (roots[a] * a) % q; 
+                if(roots[a] == 1) { 
+                    roots[a] = i; 
+                    break; 
+                } 
+            } 
+        } 
+         
+        for(int i=2; i<q; ++i) { 
+            if(roots[i] == q-1) 
+                primitiveRoots.add(i); 
+        } 
+         
+        System.out.println("primitive roots for q = " + q 
++ " are: " + primitiveRoots); 
+    } 
+     
+    public boolean isPrime(int n) { 
+        if(n < 2) 
+            return false; 
+         
+        for(int i=2; i<=(int)Math.sqrt(n); ++i) { 
+            if(n%i == 0) 
+                return false; 
+        } 
+         
+        return true; 
+    } 
+     
+    public boolean checkAlpha(int n) { 
+        return primitiveRoots.contains(n);             
+    } 
+     
+} 
+CODE----------------------------------------
+
+10.	Alice uses a Bob’s public key for sending a confidential message. Alice select a two large prime numbers to generate a private and public key so that eve could not break the ciphertext. So as a developer implement this Algorithm to generate a pair of keys and each message should be encrypted by different key pairs.
+
+CODE------------------------------------------
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("Enter 1 to Encrypt, 2 to Decrypt, 3 to Exit:");
+        int number = sc.nextInt();
+
+        if (number == 3) {
+            System.out.println("Exiting the program.");
+            sc.close();
+            return;
+        }
+
+        System.out.print("Enter a prime number (q): ");
+        int q = sc.nextInt();
+
+        System.out.print("Enter a primitive root of q (pri): ");
+        int pri = sc.nextInt();
+
+        int xa;
+        while (true) {
+            System.out.print("Enter private key (xa), which should be less than " + (q - 1) + ": ");
+            xa = sc.nextInt();
+            if (xa < q - 1) {
+                break;
+            }
+            System.out.println("Invalid input: private key (xa) should be less than q - 1.");
+        }
+
+        int ya = 1;
+        for (int i = 0; i < xa; i++) {
+            ya = (ya * pri) % q;
+        }
+        System.out.println("Public key (ya): " + ya);
+
+        if (number == 1) {
+            int message;
+            while (true) {
+                System.out.print("Enter a message to encrypt (as a number less than " + q + "): ");
+                message = sc.nextInt();
+                if (message < q) {
+                    break;
+                }
+                System.out.println("Invalid input: message should be less than q.");
+            }
+
+            Random rand = new Random();
+            int k = rand.nextInt(q - 1) + 1;
+            System.out.println("Random number less than q (k): " + k);
+
+            int c1 = 1;
+            for (int i = 0; i < k; i++) {
+                c1 = (c1 * pri) % q;
+            }
+
+            int K = 1;
+            for (int i = 0; i < k; i++) {
+                K = (K * ya) % q;
+            }
+
+            int c2 = (message * K) % q;
+            
+            System.out.println("Encrypted message:");
+            System.out.println("c1: " + c1);
+            System.out.println("c2: " + c2);
+        } else if (number == 2) {
+            System.out.print("Enter c1: ");
+            int c1 = sc.nextInt();
+            System.out.print("Enter c2: ");
+            int c2 = sc.nextInt();
+
+            int K = 1;
+            for (int i = 0; i < xa; i++) {
+                K = (K * c1) % q;
+            }
+
+            int K_inverse = modInverse(K, q);
+            int decryptedMessage = (c2 * K_inverse) % q;
+            System.out.println("Decrypted message: " + decryptedMessage);
+        } else {
+            System.out.println("Invalid input. Choose 1 for encryption, 2 for decryption, or 3 to exit.");
+        }
+
+        sc.close();
+    }
+
+    public static int modInverse(int a, int m) {
+        int m0 = m, t, q;
+        int x0 = 0, x1 = 1;
+
+        if (m == 1)
+            return 0;
+
+        while (a > 1) {
+            q = a / m;
+            t = m;
+
+            m = a % m;
+            a = t;
+            t = x0;
+
+            x0 = x1 - q * x0;
+            x1 = t;
+        }
+
+        if (x1 < 0)
+            x1 += m0;
+
+        return x1;
+    }
+}
+CODE--------------------------------------
+
+
+11.	Alice is of one of the employee of company XYZ. He wants to ensure that whatever data he is sending to Bob should be checked for accuracy. Implement the RSA digital signature for the message "This is an example” for showing the Digital Signature in such a scenario.
+
+CODE-------------------------------------------
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("Enter 1 to Sign Message, 2 to Verify Signature, 3 to Exit:");
+        int option = sc.nextInt();
+
+        if (option == 3) {
+            System.out.println("Exiting the program.");
+            sc.close();
+            return;
+        }
+
+        // Step 1: Key Generation
+        System.out.print("Enter a small prime number (p): ");
+        int p = sc.nextInt();
+        System.out.print("Enter another small prime number (q): ");
+        int q = sc.nextInt();
+
+        // Calculate n = p * q (modulus for both public and private keys)
+        int n = p * q;
+        // Calculate phi(n) = (p - 1) * (q - 1)
+        int phi = (p - 1) * (q - 1);
+
+        // Calculate public key e (e must be coprime with phi(n))
+        int e = 3;
+        while (gcd(e, phi) != 1) {
+            e++;
+        }
+
+        // Calculate private key d (d is the modular inverse of e modulo phi(n))
+        int d = modInverse(e, phi);
+
+        System.out.println("Public Key (n, e): (" + n + ", " + e + ")");
+        System.out.println("Private Key (n, d): (" + n + ", " + d + ")");
+
+        if (option == 1) {
+            // Alice signs the message
+            System.out.println("Enter the message to sign:");
+
+            // Take input message from the user
+            sc.nextLine();  // Consume newline left by nextInt()
+            String message = sc.nextLine();
+            System.out.println("Signing message: '" + message + "'");
+
+            // Step 2: Sign the message
+            int signature = signMessage(message, d, n);
+            System.out.println("Digital Signature: " + signature);
+        } else if (option == 2) {
+            // Bob verifies the signature
+            System.out.print("Enter the digital signature to verify: ");
+            int signature = sc.nextInt();
+
+            // Step 3: Verify the signature
+            sc.nextLine();  // Consume newline left by nextInt()
+            System.out.println("Enter the message to verify:");
+            String message = sc.nextLine();
+
+            boolean isVerified = verifySignature(message, signature, e, n);
+            if (isVerified) {
+                System.out.println("Signature verification successful: Message is authentic.");
+            } else {
+                System.out.println("Signature verification failed: Message may have been tampered.");
+            }
+        }
+
+        sc.close();
+    }
+
+    // Method to calculate GCD of two numbers
+    public static int gcd(int a, int b) {
+        while (b != 0) {
+            int t = b;
+            b = a % b;
+            a = t;
+        }
+        return a;
+    }
+
+    // Method to calculate modular inverse
+    public static int modInverse(int a, int m) {
+        int m0 = m, t, q;
+        int x0 = 0, x1 = 1;
+
+        if (m == 1)
+            return 0;
+
+        while (a > 1) {
+            q = a / m;
+            t = m;
+            m = a % m;
+            a = t;
+            t = x0;
+            x0 = x1 - q * x0;
+            x1 = t;
+        }
+
+        if (x1 < 0)
+            x1 += m0;
+
+        return x1;
+    }
+
+    // Method to sign the message (message is hashed, and then encrypted with private key)
+    public static int signMessage(String message, int privateKey, int n) {
+        // Hash the message (simple method: sum of ASCII values)
+        int hash = 0;
+        for (int i = 0; i < message.length(); i++) {
+            hash += message.charAt(i);
+        }
+        hash = hash % n; // Take modulus with n for small hashes
+
+        // Encrypt the hash with the private key to generate the signature
+        return modExponentiation(hash, privateKey, n);
+    }
+
+    // Method to verify the signature (decrypt signature using public key and compare with hash)
+    public static boolean verifySignature(String message, int signature, int publicKey, int n) {
+        // Hash the message
+        int hash = 0;
+        for (int i = 0; i < message.length(); i++) {
+            hash += message.charAt(i);
+        }
+        hash = hash % n; // Take modulus with n for small hashes
+
+        // Decrypt the signature using the public key
+        int decryptedHash = modExponentiation(signature, publicKey, n);
+
+        // Compare the decrypted hash with the original hash
+        return hash == decryptedHash;
+    }
+
+    // Method to calculate modular exponentiation (a^b % n)
+    public static int modExponentiation(int base, int exponent, int modulus) {
+        int result = 1;
+        base = base % modulus;
+
+        while (exponent > 0) {
+            if (exponent % 2 == 1) {
+                result = (result * base) % modulus;
+            }
+            exponent = exponent >> 1;
+            base = (base * base) % modulus;
+        }
+
+        return result;
+    }
+}
+CODE-----------------------------------------
+
+12.	Alice is of one of the employee of company XYZ. He wants to ensure that whatever data he is sending to Bob should be checked for accuracy. Implement the Elgamal digital signature for the message "Hello how are you” for showing the Digital Signature in such a scenario
+
+CODE------------------------------------
+import java.util.Scanner;
+
+public class Main {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        boolean running = true;
+
+        while (running) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1. ElGamal Digital Signature");
+            System.out.println("2. Encryption");
+            System.out.println("3. Decryption");
+            System.out.println("4. Exit");
+
+            int choice = 0;
+            try {
+                choice = sc.nextInt();
+                sc.nextLine(); // Consume the newline character
+            } catch (Exception e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+                sc.nextLine(); // Consume the invalid input
+                continue;
+            }
+
+            switch (choice) {
+                case 1:
+                    // ElGamal Digital Signature
+                    elGamalDigitalSignature(sc);
+                    break;
+                case 2:
+                    // Encryption
+                    encryption(sc);
+                    break;
+                case 3:
+                    // Decryption
+                    decryption(sc);
+                    break;
+                case 4:
+                    // Exit the program
+                    System.out.println("Exiting...");
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Invalid input. Please choose a valid option.");
+            }
+        }
+
+        sc.close();
+    }
+
+    public static void elGamalDigitalSignature(Scanner sc) {
+        System.out.println("\n--- ElGamal Digital Signature ---");
+
+        // Step 1: Key Generation
+        int p = getValidPrime(sc);
+        int g = getValidPrimitiveRoot(sc, p);
+
+        // Private key x
+        int x = getValidPrivateKey(sc, p);
+
+        // Public key y = g^x % p
+        int y = modExponentiation(g, x, p);
+
+        System.out.println("Public Key (y): " + y);
+        System.out.println("Private Key (x): " + x);
+
+        // Step 2: Sign the message
+        System.out.println("Enter the message to sign:");
+        String message = sc.nextLine();
+        int messageHash = message.hashCode() % p;  // Simplified hash
+
+        System.out.println("Message Hash (H(m)): " + messageHash);
+
+        // Choose a random number k
+        int k = getValidK(sc, p);
+
+        // Compute r = g^k % p
+        int r = modExponentiation(g, k, p);
+
+        // Compute the modular inverse of k
+        int kInverse = modInverse(k, p - 1);
+
+        // Compute s = k^(-1) * (H(m) - x * r) % (p-1)
+        int s = (kInverse * (messageHash - x * r % (p - 1))) % (p - 1);
+
+        // Step 3: Display the signature
+        System.out.println("Signature: (r, s) = (" + r + ", " + s + ")");
+
+        // Step 4: Verify the signature
+        verifySignature(sc, r, s, messageHash, p, g, y);
+    }
+
+    public static void encryption(Scanner sc) {
+        System.out.println("\n--- Encryption ---");
+        sc.nextLine(); // Consume the newline character after choosing the option
+        System.out.print("Enter the message to encrypt: ");
+        String message = sc.nextLine();
+        System.out.print("Enter a shift value for encryption: ");
+        int shift = sc.nextInt();
+
+        String encryptedMessage = caesarCipherEncrypt(message, shift);
+        System.out.println("Encrypted message: " + encryptedMessage);
+    }
+
+    public static void decryption(Scanner sc) {
+        System.out.println("\n--- Decryption ---");
+        sc.nextLine(); // Consume the newline character after choosing the option
+        System.out.print("Enter the message to decrypt: ");
+        String message = sc.nextLine();
+        System.out.print("Enter the shift value used for encryption: ");
+        int shift = sc.nextInt();
+
+        String decryptedMessage = caesarCipherDecrypt(message, shift);
+        System.out.println("Decrypted message: " + decryptedMessage);
+    }
+
+    public static String caesarCipherEncrypt(String message, int shift) {
+        StringBuilder encryptedMessage = new StringBuilder();
+        for (int i = 0; i < message.length(); i++) {
+            char c = message.charAt(i);
+            if (Character.isLetter(c)) {
+                char shiftedChar = (char) (c + shift);
+                encryptedMessage.append(shiftedChar);
+            } else {
+                encryptedMessage.append(c);
+            }
+        }
+        return encryptedMessage.toString();
+    }
+
+    public static String caesarCipherDecrypt(String message, int shift) {
+        StringBuilder decryptedMessage = new StringBuilder();
+        for (int i = 0; i < message.length(); i++) {
+            char c = message.charAt(i);
+            if (Character.isLetter(c)) {
+                char shiftedChar = (char) (c - shift);
+                decryptedMessage.append(shiftedChar);
+            } else {
+                decryptedMessage.append(c);
+            }
+        }
+        return decryptedMessage.toString();
+    }
+
+    // Method to calculate modular exponentiation (a^b % m)
+    public static int modExponentiation(int base, int exponent, int modulus) {
+        int result = 1;
+        base = base % modulus;
+
+        while (exponent > 0) {
+            if (exponent % 2 == 1) {
+                result = (result * base) % modulus;
+            }
+            exponent = exponent >> 1;
+            base = (base * base) % modulus;
+        }
+
+        return result;
+    }
+
+    // Method to calculate modular inverse (a^-1 mod m)
+    public static int modInverse(int a, int m) {
+        int m0 = m, t, q;
+        int x0 = 0, x1 = 1;
+
+        if (m == 1)
+            return 0;
+
+        while (a > 1) {
+            q = a / m;
+            t = m;
+
+            m = a % m;
+            a = t;
+            t = x0;
+
+            x0 = x1 - q * x0;
+            x1 = t;
+        }
+
+        if (x1 < 0)
+            x1 += m0;
+
+        return x1;
+    }
+
+    // Method to verify the signature
+    public static void verifySignature(Scanner sc, int r, int s, int messageHash, int p, int g, int y) {
+        System.out.println("\nVerifying the Signature...");
+        System.out.print("Enter the signature (r): ");
+        int rVerify = sc.nextInt();
+        System.out.print("Enter the signature (s): ");
+        int sVerify = sc.nextInt();
+
+        boolean isVerified = verifySignature(rVerify, sVerify, messageHash, p, g, y);
+        if (isVerified) {
+            System.out.println("Signature verified successfully: The message is authentic.");
+        } else {
+            System.out.println("Signature verification failed: The message may have been tampered.");
+        }
+    }
+
+    // Method to verify the signature
+    public static boolean verifySignature(int r, int s, int messageHash, int p, int g, int y) {
+        // Check if r and s are in the valid range
+        if (r <= 0 || r >= p || s <= 0 || s >= p) {
+            return false;
+        }
+
+        // Compute v1 = g^H(m) % p
+        int v1 = modExponentiation(g, messageHash, p);
+
+        // Compute v2 = y^r * r^s % p
+        int v2 = (modExponentiation(y, r, p) * modExponentiation(r, s, p)) % p;
+
+        // If v1 == v2, the signature is valid
+        return v1 == v2;
+    }
+
+    // Helper methods to get valid inputs
+    public static int getValidPrime(Scanner sc) {
+        int p;
+        while (true) {
+            System.out.print("Enter a large prime number p: ");
+            p = sc.nextInt();
+            if (p > 2) {
+                break;
+            }
+            System.out.println("Invalid prime number. Please enter a number greater than 2.");
+        }
+        return p;
+    }
+
+    public static int getValidPrimitiveRoot(Scanner sc, int p) {
+        int g;
+        while (true) {
+            System.out.print("Enter a primitive root g modulo p: ");
+            g = sc.nextInt();
+            if (g > 1 && g < p) {
+                break;
+            }
+            System.out.println("Invalid primitive root. It should be between 1 and " + (p - 1));
+        }
+        return g;
+    }
+
+    public static int getValidPrivateKey(Scanner sc, int p) {
+        int x;
+        while (true) {
+            System.out.print("Enter the private key x (1 < x < p-1): ");
+            x = sc.nextInt();
+            if (x > 1 && x < p - 1) {
+                break;
+            }
+            System.out.println("Invalid input: private key (x) should be between 1 and p-1.");
+        }
+        return x;
+    }
+
+    public static int getValidK(Scanner sc, int p) {
+        int k;
+        while (true) {
+            System.out.print("Enter a random number k (1 < k < p-1): ");
+            k = sc.nextInt();
+            if (k > 1 && k < p - 1) {
+                break;
+            }
+            System.out.println("Invalid input: k should be between 1 and p-1.");
+        }
+        return k;
+    }
+}
+CODE--------------------------------------------
